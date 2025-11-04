@@ -9,7 +9,6 @@ data class PostEntity(
     val id: Int,
     val title: String,
     val body: String,
-    val isLocal: Boolean = false
-
+    val isPending: Boolean = false
 )
 

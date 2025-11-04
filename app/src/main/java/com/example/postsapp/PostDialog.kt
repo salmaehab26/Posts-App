@@ -15,9 +15,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 
 @Composable
-fun AddPostDialog(onDismiss: () -> Unit, onAdd: (String, String) -> Unit) {
+fun AddPostDialog(
+    onDismiss: () -> Unit,
+    onAdd: (String, String) -> Unit
+) {
     var title by remember { mutableStateOf("") }
     var body by remember { mutableStateOf("") }
 
@@ -25,31 +31,37 @@ fun AddPostDialog(onDismiss: () -> Unit, onAdd: (String, String) -> Unit) {
         onDismissRequest = onDismiss,
         title = { Text("Add New Post") },
         text = {
-            Column {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
                     label = { Text("Title") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
                 )
-                Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
                     value = body,
                     onValueChange = { body = it },
                     label = { Text("Body") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3,
+                    maxLines = 5
                 )
             }
         },
         confirmButton = {
-            TextButton(
+            Button(
                 onClick = {
                     if (title.isNotBlank() && body.isNotBlank()) {
-                        onAdd(title, body)
+                        onAdd(title.trim(), body.trim())
                     }
-                }
+                },
+                enabled = title.isNotBlank() && body.isNotBlank()
             ) {
-                Text("Save")
+                Text("Add")
             }
         },
         dismissButton = {

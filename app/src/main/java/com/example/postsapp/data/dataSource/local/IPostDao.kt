@@ -11,17 +11,22 @@ interface IPostDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(posts: List<PostEntity>)
 
-
+    // Simple DESC order - newest (highest ID) first
     @Query("SELECT * FROM posts ORDER BY id DESC")
     fun pagingSource(): PagingSource<Int, PostEntity>
-
 
     @Query("DELETE FROM posts")
     suspend fun clearAll()
 
-    @Query("DELETE FROM posts WHERE isLocal = 0")
-    suspend fun deleteNonLocalPosts()
+    @Query("DELETE FROM posts WHERE id = :id")
+    suspend fun deleteById(id: Int)
 
+
+    @Query("DELETE FROM posts WHERE id < 1000000000")
+    suspend fun deleteOldApiPosts()
+
+    @Query("SELECT * FROM posts ORDER BY id DESC")
+    suspend fun getAllPostsOnce(): List<PostEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(post: PostEntity)

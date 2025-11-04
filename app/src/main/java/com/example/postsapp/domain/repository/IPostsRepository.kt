@@ -6,5 +6,5 @@ import kotlinx.coroutines.flow.Flow
 
 interface IPostsRepository {
     fun getPosts(): Flow<PagingData<PostEntity>>
-    suspend fun addPost(title: String, body: String)
+    suspend fun addPost(title: String, body: String): PostEntity
 }

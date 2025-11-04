@@ -1,4 +1,5 @@
 package com.example.postsapp.data.dataSource.repository
+
 import android.content.Context
 import android.util.Log
 import androidx.paging.ExperimentalPagingApi
@@ -21,7 +22,6 @@ class PostsRepositoryImpl @Inject constructor(
     private val db: PostsDatabase,
     private val api: IApiService,
     @ApplicationContext private val context: Context
-
 ) : IPostsRepository {
 
     private val dao = db.postDao()
@@ -42,35 +42,26 @@ class PostsRepositoryImpl @Inject constructor(
         ).flow
     }
 
-    override suspend fun addPost(title: String, body: String) {
-        val localId = (System.currentTimeMillis() % Int.MAX_VALUE).toInt()
+    override suspend fun addPost(title: String, body: String): PostEntity {
+        val newId = System.currentTimeMillis().toInt()
 
-        val localPost = PostEntity(
-            id = localId,
+        val newPost = PostEntity(
+            id = newId,
             title = title,
             body = body,
-            isLocal = true
+            isPending = false
         )
-        dao.insert(localPost)
-        Log.d("PostsRepositoryImpl", "Local post: $localPost")
 
-
-        Log.d("PostsRepositoryImpl", "Local post inserted with ID: $localId")
+        dao.insert(newPost)
+        Log.d("PostsRepository", "Post saved to Room: $newPost")
 
         try {
             val response = api.createPost(PostRequest(title, body))
-            Log.d("PostsRepositoryImpl", "Response: $response")
-
-            val syncedPost = localPost.copy(
-                id = localId,
-                title = response.title,
-                body = response.body,
-            )
-            Log.d("PostsRepositoryImpl", "Local post: $syncedPost")
-
-            dao.insert(syncedPost)
+            Log.d("PostsRepository", "Post synced with API: $response")
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("PostsRepository", "Failed to sync with API (post still saved locally)", e)
         }
+
+        return newPost
     }
 }

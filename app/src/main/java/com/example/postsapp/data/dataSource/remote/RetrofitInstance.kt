@@ -1,18 +1,19 @@
 package com.example.newsapplication.data.dataSource.remote
 
+import com.example.postsapp.utils.TimeoutInterceptor
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitInstance {
 
-    private val logging = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY
-    }
+//    private val logging = HttpLoggingInterceptor().apply {
+//        level = HttpLoggingInterceptor.Level.BODY
+//    }
 
     private val client = OkHttpClient.Builder()
-        .addInterceptor(logging)
+        .addInterceptor(TimeoutInterceptor())
+
         .build()
 
     val api: IApiService by lazy {
