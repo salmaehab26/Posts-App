@@ -18,10 +18,15 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideDatabase(@ApplicationContext context: Context): PostsDatabase =
-        Room.databaseBuilder(context, PostsDatabase::class.java, "posts_db")
-            .fallbackToDestructiveMigration()
+    fun provideDatabase(@ApplicationContext context: Context): PostsDatabase {
+        return Room.databaseBuilder(
+            context,
+            PostsDatabase::class.java,
+            "posts_db"
+        )
+            .fallbackToDestructiveMigration() // عشان لو غيرت version أثناء التطوير
             .build()
+    }
 
     @Provides
     @Singleton

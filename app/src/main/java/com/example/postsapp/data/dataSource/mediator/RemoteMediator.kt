@@ -33,6 +33,7 @@ class PostsRemoteMediator(
 
         val isConnected = isNetworkAvailable(context)
 
+
         return try {
             if (!isConnected) {
                 return MediatorResult.Success(endOfPaginationReached = true)

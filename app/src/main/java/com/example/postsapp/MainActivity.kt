@@ -7,6 +7,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
@@ -23,6 +26,8 @@ import com.example.newsapplication.data.dataSource.local.PostEntity
 import com.example.postsapp.ui.theme.Pink40
 import com.example.postsapp.ui.theme.PostsAppTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -40,12 +45,16 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostsScreen(vm: PostsViewModel = hiltViewModel()) {
     val posts = vm.posts.collectAsLazyPagingItems()
     var showDialog by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val listState = rememberLazyListState()
+    val localPosts = vm.localPosts
+
+
 
     Scaffold(
         topBar = {
@@ -61,22 +70,17 @@ fun PostsScreen(vm: PostsViewModel = hiltViewModel()) {
         }
     ) { padding ->
 
-        // ✅ Use Box to center load/error states
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
             when (val state = posts.loadState.refresh) {
-                is LoadState.Loading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
+                is LoadState.Loading -> CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
+                )
 
-                is LoadState.Error -> {
-                    ErrorItem("Failed to load posts: ${state.error.message}")
-                }
+                is LoadState.Error -> ErrorItem("Failed to load posts: ${state.error.message}")
 
                 is LoadState.NotLoading -> {
                     if (posts.itemCount == 0) {
@@ -86,32 +90,47 @@ fun PostsScreen(vm: PostsViewModel = hiltViewModel()) {
                             style = MaterialTheme.typography.bodyLarge
                         )
                     } else {
-                        ListOfPosts(posts)
+                        ListOfPosts(localPosts, posts, listState)
                     }
                 }
             }
         }
     }
 
-    // ✅ Add dialog for creating a new post
     if (showDialog) {
         AddPostDialog(
             onDismiss = { showDialog = false },
             onAdd = { title, body ->
                 vm.addNewPost(title, body)
                 showDialog = false
+                scope.launch {
+                    delay(200)
+                    listState.animateScrollToItem(0)
+
+                }
             }
         )
     }
 }
-
 @Composable
-fun ListOfPosts(posts: LazyPagingItems<PostEntity>) {
+fun ListOfPosts(
+    localPosts: List<PostEntity>,
+    posts: LazyPagingItems<PostEntity>,
+    listState: LazyListState
+) {
     LazyColumn(
+        state = listState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        items(
+            items = localPosts,
+            key = { it.id }
+        ) { post ->
+            PostItem(post)
+        }
+
         items(
             count = posts.itemCount,
             key = posts.itemKey { it.id }
@@ -121,7 +140,6 @@ fun ListOfPosts(posts: LazyPagingItems<PostEntity>) {
             }
         }
 
-        // ✅ Optional: handle pagination loading (APPEND)
         if (posts.loadState.append is LoadState.Loading) {
             item {
                 Box(
@@ -136,6 +154,7 @@ fun ListOfPosts(posts: LazyPagingItems<PostEntity>) {
         }
     }
 }
+
 
 @Composable
 fun PostItem(post: PostEntity) {

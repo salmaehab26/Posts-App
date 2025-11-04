@@ -12,7 +12,7 @@ interface IPostDao {
     suspend fun insertAll(posts: List<PostEntity>)
 
 
-    @Query("SELECT * FROM posts ")
+    @Query("SELECT * FROM posts ORDER BY id DESC")
     fun pagingSource(): PagingSource<Int, PostEntity>
 
 

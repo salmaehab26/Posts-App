@@ -1,6 +1,6 @@
 package com.example.postsapp.data.dataSource.repository
-
 import android.content.Context
+import android.util.Log
 import androidx.paging.ExperimentalPagingApi
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -34,9 +34,10 @@ class PostsRepositoryImpl @Inject constructor(
             config = PagingConfig(
                 pageSize = 10,
                 enablePlaceholders = false,
-                prefetchDistance = 2
+                prefetchDistance = 2,
+                initialLoadSize = 10
             ),
-            remoteMediator = PostsRemoteMediator(api, db,context),
+            remoteMediator = PostsRemoteMediator(api, db, context),
             pagingSourceFactory = pagingSourceFactory
         ).flow
     }
@@ -51,18 +52,25 @@ class PostsRepositoryImpl @Inject constructor(
             isLocal = true
         )
         dao.insert(localPost)
+        Log.d("PostsRepositoryImpl", "Local post: $localPost")
+
+
+        Log.d("PostsRepositoryImpl", "Local post inserted with ID: $localId")
 
         try {
             val response = api.createPost(PostRequest(title, body))
+            Log.d("PostsRepositoryImpl", "Response: $response")
+
             val syncedPost = localPost.copy(
+                id = localId,
                 title = response.title,
                 body = response.body,
-                isLocal = false // synced to server
             )
+            Log.d("PostsRepositoryImpl", "Local post: $syncedPost")
+
             dao.insert(syncedPost)
         } catch (e: Exception) {
             e.printStackTrace()
         }
-
-}
+    }
 }
