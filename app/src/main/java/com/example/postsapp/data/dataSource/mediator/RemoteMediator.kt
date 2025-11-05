@@ -14,9 +14,8 @@ import com.example.newsapplication.data.dataSource.remote.IApiService
 import com.example.newsapplication.utils.NetworkUtils.isNetworkAvailable
 import com.example.postsapp.data.dataSource.remote.response.toEntity
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.TimeoutException
 
 @OptIn(ExperimentalPagingApi::class)
@@ -42,35 +41,26 @@ class PostsRemoteMediator(
 
             if (!isNetworkAvailable(context)) {
                 Log.d("RemoteMediator", "No network - using cached data")
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "Offline mode: showing saved posts", Toast.LENGTH_SHORT)
-                        .show()
-                }
-                val hasLocal = dao.getAllPostsOnce().isNotEmpty()
-
-                return if (hasLocal) {
-                    MediatorResult.Success(endOfPaginationReached = true)
-
-                } else {
-                    MediatorResult.Error(TimeoutException("No network available"))
-                }
+                return MediatorResult.Success(endOfPaginationReached = true)
             }
 
-            val response = try {
-                withTimeout(30_000L) {
-                    api.getPosts(page, state.config.pageSize)
-                }
-            } catch (e: TimeoutCancellationException) {
-                Log.e("RemoteMediator", "Timeout after 30 seconds", e)
+            val response = withTimeoutOrNull(30_000L) {
+                api.getPosts(page, state.config.pageSize)
+            }
+
+            if (response == null) {
+                Log.d("RemoteMediator", "Request timeout")
+
                 val hasLocalData = dao.getAllPostsOnce().isNotEmpty()
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(
-                        context,
-                        "Slow connection — showing local data",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
                 return if (hasLocalData) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            context,
+                            "Request timeout: showing saved posts",
+                            Toast.LENGTH_SHORT
+                        )
+                            .show()
+                    }
                     MediatorResult.Success(endOfPaginationReached = true)
                 } else {
                     MediatorResult.Error(TimeoutException("Connection timeout"))
@@ -81,6 +71,7 @@ class PostsRemoteMediator(
 
             db.withTransaction {
                 if (loadType == LoadType.REFRESH) {
+
                     dao.deleteOldApiPosts()
                 }
                 dao.insertAll(remotePosts)
@@ -98,14 +89,13 @@ class PostsRemoteMediator(
 
             val hasLocalData = dao.getAllPostsOnce().isNotEmpty()
             if (hasLocalData && loadType == LoadType.REFRESH) {
-                return MediatorResult.Success(endOfPaginationReached = true)
+
+                 MediatorResult.Success(endOfPaginationReached = true)
             }
 
             MediatorResult.Error(e)
         }
     }
 
-    override suspend fun initialize(): InitializeAction {
-        return InitializeAction.LAUNCH_INITIAL_REFRESH
-    }
+
 }

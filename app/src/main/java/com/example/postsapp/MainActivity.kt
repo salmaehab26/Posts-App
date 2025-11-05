@@ -10,6 +10,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
@@ -17,10 +20,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color.Companion.White
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.LoadState
-import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.newsapplication.data.dataSource.local.PostEntity
 import com.example.postsapp.domain.viewModel.PostsViewModel
@@ -29,7 +33,6 @@ import com.example.postsapp.ui.theme.PostsAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.concurrent.TimeoutException
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -37,19 +40,64 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            PostsAppTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    PostsScreen()
-                }
+                    MainScreen()
+
             }
         }
     }
 }
 
+@Composable
+fun MainScreen() {
+    var selectedScreen by remember { mutableStateOf("home") }
+
+    Scaffold(
+        bottomBar = {
+            NavigationBar(containerColor = Pink40,  modifier = Modifier.height(80.dp) ) {
+                NavigationBarItem(
+                    selected = selectedScreen == "home",
+                    onClick = { selectedScreen = "home" },
+                    icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
+                )
+                NavigationBarItem(
+                    selected = selectedScreen == "favorites",
+                    onClick = { selectedScreen = "favorites" },
+                    icon = { Icon(Icons.Default.Favorite, contentDescription = "Favorites") },
+                )
+                NavigationBarItem(
+                    selected = selectedScreen == "settings",
+                    onClick = { selectedScreen = "settings" },
+                    icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
+                )
+            }
+        }
+    ) { padding ->
+        Box(modifier = Modifier.padding(padding)) {
+            when (selectedScreen) {
+                "home" -> PostsScreen()
+                "favorites" -> SimpleScreen("Favorites Screen")
+                "settings" -> SimpleScreen("Settings Screen")
+            }
+        }
+    }
+}
+
+@Composable
+fun SimpleScreen(text: String) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(text = text, style = MaterialTheme.typography.titleLarge)
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun PostsScreen(vm: PostsViewModel = hiltViewModel()) {
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+
     val posts = vm.posts.collectAsLazyPagingItems()
     var showDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -63,10 +111,19 @@ fun PostsScreen(vm: PostsViewModel = hiltViewModel()) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Posts") },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Pink40)
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        text = "Posts",
+                        color = White,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                },           scrollBehavior = scrollBehavior,
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Pink40
+                ),
             )
+
         },
         floatingActionButton = {
             FloatingActionButton(
@@ -85,73 +142,75 @@ fun PostsScreen(vm: PostsViewModel = hiltViewModel()) {
         ) {
             when (val state = posts.loadState.refresh) {
                 is LoadState.Loading -> {
-                    // لو في تحميل (بما في ذلك أول تحميل لو النت بطئ) - نعرض دائرة تحميل
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
-                    )
+                    if (posts.itemCount == 0) {
+                        CircularProgressIndicator(Modifier.align(Alignment.Center))
+                    }
                 }
 
                 is LoadState.Error -> {
-                    // لو حصل خطأ (بما في ذلك TimeoutException) - نعرض رسالة و Try Again
-                    ErrorItem(
-                        message = when {
-                            state.error is java.util.concurrent.TimeoutException ->
-                                "Connection timeout. Please check your internet and try again."
-                            else ->
-                                "Failed to load posts: ${state.error.message ?: "Unknown error"}"
-                        },
-                        onRetry = { posts.retry() }
-                    )
+                    if (posts.itemCount == 0) {
+                        ErrorItem(
+                            message = when {
+                                state.error.message?.contains(
+                                    "timeout",
+                                    ignoreCase = true
+                                ) == true ->
+                                    "Connection timeout. Please check your internet and try again."
+
+                                else -> "Failed to load posts: ${state.error.message}"
+                            },
+                            onRetry = { posts.refresh() }
+                        )
+                    }
                 }
 
                 is LoadState.NotLoading -> {
                     if (posts.itemCount == 0) {
-                        Text(
-                            "No posts available. Pull to refresh.",
-                            modifier = Modifier.align(Alignment.Center),
-                            style = MaterialTheme.typography.bodyLarge
+                        ErrorItem(
+                            message = "No connection. Please check your internet and try again.",
+                            onRetry = { posts.refresh() }
                         )
-                    } else {
-                        LazyColumn(
-                            state = listState,
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(
-                                count = posts.itemCount,
-                                key = { index -> posts.peek(index)?.id ?: index }
-                            ) { index ->
-                                posts[index]?.let { post ->
-                                    PostItem(post)
-                                }
-                            }
+                    }
+                }
+            }
 
-                            if (posts.loadState.append is LoadState.Loading) {
-                                item {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        CircularProgressIndicator()
-                                    }
-                                }
-                            }
+            if (posts.itemCount > 0) {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(
+                        count = posts.itemCount,
+                        key = { index -> posts.peek(index)?.id ?: index }
+                    ) { index ->
+                        posts[index]?.let { post -> PostItem(post) }
+                    }
 
-                            if (posts.loadState.append is LoadState.Error) {
-                                item {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Button(onClick = { posts.retry() }) {
-                                            Text("Load More")
-                                        }
-                                    }
+                    if (posts.loadState.append is LoadState.Loading) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
+                    }
+
+                    if (posts.loadState.append is LoadState.Error) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Button(onClick = { posts.retry() }) {
+                                    Text("Load More")
                                 }
                             }
                         }
@@ -174,13 +233,14 @@ fun PostsScreen(vm: PostsViewModel = hiltViewModel()) {
                 vm.addNewPost(title, body)
                 showDialog = false
                 scope.launch {
-                    delay(100)
+                    delay(200)
                     listState.animateScrollToItem(0)
                 }
             }
         )
     }
 }
+
 @Composable
 fun PostItem(post: PostEntity) {
     Card(
@@ -206,7 +266,11 @@ fun PostItem(post: PostEntity) {
 }
 
 @Composable
-fun ErrorItem(message: String, onRetry: () -> Unit) {
+fun ErrorItem(
+    message: String,
+    detailMessage: String? = null,
+    onRetry: () -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -215,14 +279,26 @@ fun ErrorItem(message: String, onRetry: () -> Unit) {
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
                 text = message,
                 color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
-            Button(onClick = onRetry) {
+            if (detailMessage != null && detailMessage.isNotBlank()) {
+                Text(
+                    text = detailMessage,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+            }
+            Button(
+                onClick = onRetry,
+                colors = ButtonDefaults.buttonColors(containerColor = Pink40)
+            ) {
                 Text("Try Again")
             }
         }
