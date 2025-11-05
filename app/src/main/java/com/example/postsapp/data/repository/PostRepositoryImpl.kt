@@ -1,4 +1,4 @@
-package com.example.postsapp.data.dataSource.repository
+package com.example.postsapp.data.repository
 
 import android.content.Context
 import android.util.Log
@@ -9,7 +9,7 @@ import androidx.paging.PagingData
 import com.example.newsapplication.data.dataSource.local.PostEntity
 import com.example.newsapplication.data.dataSource.local.PostsDatabase
 import com.example.newsapplication.data.dataSource.remote.IApiService
-import com.example.postsapp.data.dataSource.mediator.PostsRemoteMediator
+import com.example.postsapp.data.mediator.PostsRemoteMediator
 import com.example.postsapp.data.dataSource.remote.response.PostRequest
 import com.example.postsapp.domain.repository.IPostsRepository
 import dagger.hilt.android.qualifiers.ApplicationContext

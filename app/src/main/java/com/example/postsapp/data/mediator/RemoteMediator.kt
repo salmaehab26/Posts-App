@@ -1,4 +1,4 @@
-package com.example.postsapp.data.dataSource.mediator
+package com.example.postsapp.data.mediator
 
 import android.content.Context
 import android.util.Log
@@ -58,8 +58,7 @@ class PostsRemoteMediator(
                             context,
                             "Request timeout: showing saved posts",
                             Toast.LENGTH_SHORT
-                        )
-                            .show()
+                        ).show()
                     }
                     MediatorResult.Success(endOfPaginationReached = true)
                 } else {

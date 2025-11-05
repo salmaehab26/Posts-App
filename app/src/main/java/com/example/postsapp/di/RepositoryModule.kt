@@ -1,6 +1,6 @@
 package com.example.postsapp.di
 
-import com.example.postsapp.data.dataSource.repository.PostsRepositoryImpl
+import com.example.postsapp.data.repository.PostsRepositoryImpl
 import com.example.postsapp.domain.repository.IPostsRepository
 import dagger.Binds
 import dagger.Module

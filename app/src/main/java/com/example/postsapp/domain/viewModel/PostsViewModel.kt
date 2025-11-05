@@ -23,7 +23,6 @@ class PostsViewModel @Inject constructor(
     val posts = getPostsUseCase().cachedIn(viewModelScope)
 
     private val _isAddingPost = MutableStateFlow(false)
-    val isAddingPost: StateFlow<Boolean> = _isAddingPost.asStateFlow()
 
     fun addNewPost(title: String, body: String) {
         if (_isAddingPost.value) return
