@@ -18,7 +18,7 @@ fun ErrorItem(message: String, onRetry: () -> Unit) {
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(message, color = MaterialTheme.colorScheme.error)
-            Button(onClick = onRetry) {
+            Button(onClick = onRetry,) {
                 Text("Try Again")
             }
         }

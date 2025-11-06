@@ -15,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.postsapp.ui.theme.Pink40
 
 @Composable
 fun PostDetailScreen(title: String, body: String) {
@@ -30,7 +31,7 @@ fun PostDetailScreen(title: String, body: String) {
             elevation = CardDefaults.cardElevation(6.dp)
         ) {
             Column(Modifier.padding(16.dp)) {
-                Text(text = title, style = MaterialTheme.typography.titleLarge)
+                Text(text = title, style = MaterialTheme.typography.titleLarge, color = Pink40)
                 Spacer(Modifier.height(12.dp))
                 HorizontalDivider(Modifier, DividerDefaults.Thickness, DividerDefaults.color)
                 Spacer(Modifier.height(12.dp))

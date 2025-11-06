@@ -46,6 +46,8 @@ dependencies {
      //Room
     implementation("androidx.room:room-runtime:2.6.1")
     implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.material3)
+    implementation(libs.material)
 
     kapt("androidx.room:room-compiler:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
@@ -72,7 +74,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
     implementation("androidx.paging:paging-compose:3.3.2")
     implementation("androidx.navigation:navigation-compose:2.8.2")
-
+    implementation("androidx.compose.material:material-icons-extended:1.7.5")
     implementation("androidx.compose.material:material:1.7.5")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

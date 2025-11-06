@@ -25,16 +25,12 @@ class PostsViewModel @Inject constructor(
     private val _isAddingPost = MutableStateFlow(false)
 
     fun addNewPost(title: String, body: String) {
-        if (_isAddingPost.value) return
 
         viewModelScope.launch {
             try {
-                _isAddingPost.value = true
                 addPostUseCase(title, body)
             } catch (e: Exception) {
                 e.printStackTrace()
-            } finally {
-                _isAddingPost.value = false
             }
         }
     }

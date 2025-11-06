@@ -1,5 +1,7 @@
 package com.example.postsapp.ui.compose
 
+import ModernLoadingIndicator
+import android.R.color.white
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -14,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -32,7 +35,7 @@ fun PostsScreen(navController: NavHostController, vm: PostsViewModel = hiltViewM
     val scope = rememberCoroutineScope()
     var showDialog by remember { mutableStateOf(false) }
 
-    val isRefreshing = posts.loadState.refresh is LoadState.Loading
+    val isRefreshing = posts.loadState.refresh is LoadState.Loading && posts.itemCount > 0
     val pullRefreshState = rememberPullRefreshState(
         refreshing = isRefreshing,
         onRefresh = { posts.refresh() }
@@ -58,7 +61,11 @@ fun PostsScreen(navController: NavHostController, vm: PostsViewModel = hiltViewM
                 onClick = { showDialog = true },
                 containerColor = Pink40
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Post")
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add Post",
+                    tint = White
+                )
             }
         }
     ) { paddingValues ->
@@ -70,7 +77,12 @@ fun PostsScreen(navController: NavHostController, vm: PostsViewModel = hiltViewM
         ) {
             when (val state = posts.loadState.refresh) {
                 is LoadState.Loading -> if (posts.itemCount == 0)
-                    CircularProgressIndicator(Modifier.align(Alignment.Center))
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        ModernLoadingIndicator()
+                    }
 
                 is LoadState.Error -> if (posts.itemCount == 0)
                     ErrorItem(
@@ -78,11 +90,15 @@ fun PostsScreen(navController: NavHostController, vm: PostsViewModel = hiltViewM
                         onRetry = { posts.refresh() }
                     )
 
-                is LoadState.NotLoading -> if (posts.itemCount == 0)
-                    ErrorItem(
-                        message = "No posts available.",
-                        onRetry = { posts.refresh() }
-                    )
+                is LoadState.NotLoading -> {
+                    val isEndReached = posts.loadState.append.endOfPaginationReached
+                    if (posts.itemCount == 0 && isEndReached) {
+                        ErrorItem(
+                            message = "No posts available.",
+                            onRetry = { posts.refresh() }
+                        )
+                    }
+                }
             }
 
             if (posts.itemCount > 0) {

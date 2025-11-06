@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.newsapplication.data.dataSource.local.PostEntity
+import com.example.postsapp.ui.theme.Pink40
 
 @Composable
 fun PostItem(post: PostEntity, onClick: (PostEntity) -> Unit) {
@@ -28,13 +29,12 @@ fun PostItem(post: PostEntity, onClick: (PostEntity) -> Unit) {
             Text(
                 text = post.title,
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
+                color = Pink40
             )
             Spacer(Modifier.height(4.dp))
             Text(
                 text = post.body,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }

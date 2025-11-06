@@ -6,36 +6,22 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.ExperimentalMaterialApi
+
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.pullrefresh.PullRefreshIndicator
-import androidx.compose.material.pullrefresh.pullRefresh
-import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
-import androidx.paging.LoadState
-import androidx.paging.compose.collectAsLazyPagingItems
-import com.example.newsapplication.data.dataSource.local.PostEntity
-import com.example.postsapp.domain.viewModel.PostsViewModel
+
 import com.example.postsapp.ui.theme.Pink40
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -43,8 +29,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-                val navController = rememberNavController()
-                MainScreen(navController)
+            val navController = rememberNavController()
+            MainScreen(navController)
 
         }
     }
@@ -60,19 +46,46 @@ fun MainScreen(navController: NavHostController) {
                 NavigationBarItem(
                     selected = selectedScreen == "home",
                     onClick = { selectedScreen = "home" },
-                    icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
+                    icon = {
+                        Icon(
+                            Icons.Default.Home,
+                            contentDescription = "Home",
+                            tint = if (selectedScreen == "home") Color.Black.copy(
+                                alpha = 0.6f
+                            )
+                            else Color.White
+                        )
+                    },
                     label = { Text("Home") }
                 )
                 NavigationBarItem(
                     selected = selectedScreen == "favorites",
                     onClick = { selectedScreen = "favorites" },
-                    icon = { Icon(Icons.Default.Favorite, contentDescription = "Favorites") },
+                    icon = {
+                        Icon(
+                            Icons.Default.Favorite,
+                            contentDescription = "Favorites",
+                            tint = if (selectedScreen == "favorites") Color.Black.copy(
+                                alpha = 0.6f
+                            )
+                            else Color.White
+                        )
+                    },
                     label = { Text("Favorites") }
                 )
                 NavigationBarItem(
                     selected = selectedScreen == "settings",
                     onClick = { selectedScreen = "settings" },
-                    icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
+                    icon = {
+                        Icon(
+                            Icons.Default.Settings,
+                            contentDescription = "Settings",
+                            tint = if (selectedScreen == "Settings") Color.Black.copy(
+                                alpha = 0.6f
+                            )
+                            else Color.White
+                        )
+                    },
                     label = { Text("Settings") }
                 )
             }
